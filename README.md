@@ -1,87 +1,72 @@
-# VR Fast Food — site vitrine
+# VR Fast Food — À pleine bouche.
 
-Fast-food présenté comme un univers de jeu vidéo, en version lumineuse : fond crème, rouge tomate, jaune soleil, orange, touches de menthe. Burger 3D en vedette, menu façon « écran de sélection », commande en quelques gestes.
+Refonte du site statique HTML/CSS/JavaScript : crème chaud, rouge profond, typographies Barlow Condensed et DM Sans, scène Three.js procédurale. Aucune étape de compilation ni dépendance à installer.
 
-Site statique : HTML, CSS et JavaScript sans étape de construction ni paquet à installer.
+## Ouvrir l’aperçu
 
-## Lancer l'aperçu
+Dans ce dossier :
 
-    node serveur.mjs
+```sh
+node serveur.mjs 4187
+```
 
-Puis ouvrir http://localhost:4173 (autre port : `node serveur.mjs 8080`). N'importe quel hébergement statique convient pour la mise en ligne : il suffit d'envoyer le dossier tel quel (`serveur.mjs` et ce README ne sont pas nécessaires en ligne).
+Ouvrir http://localhost:4187. Si ce port est occupé, choisir un autre numéro. Le serveur est réservé à l’aperçu local, écoute sur 127.0.0.1 et refuse les fichiers cachés. Pour héberger le site, publier `index.html`, `mentions-legales.html`, `css/`, `js/` et `assets/` sur un hébergement statique.
 
-## Fichiers
+## Contenu authentique manquant
 
-| Fichier | Rôle |
-| --- | --- |
-| `js/data.js` | **Tout le contenu** : coordonnées, horaires, réseaux, catégories, plats, prix, photos |
-| `index.html` | Structure de la page, textes d'accueil, pictogrammes, illustration de secours du burger |
-| `css/style.css` | Direction artistique (couleurs et réglages en haut du fichier, section « Jetons ») |
-| `js/main.js` | Onglets, cartes, « Ma commande », infos pratiques, apparitions au défilement |
-| `js/burger3d.js` | Burger 3D de l'accueil (Three.js, construit en code) |
-| `mentions-legales.html` | Page légale à compléter |
-| `assets/plats/` | Dossier des photos des plats |
+Le dépôt initial ne fournit **aucune donnée permettant de vérifier l’établissement**. « VR Fast Food » est le nom du projet, pas une identité juridique vérifiée. Les catégories viennent du projet initial et restent à confirmer. Aucun rapprochement avec un restaurant homonyme n’a été effectué.
 
-## Contenu à remplir
+À fournir : nom commercial confirmé, adresse, téléphone, e-mail, horaires, itinéraire, plats et compositions, prix, disponibilités, photos avec droit d’utilisation, numéro WhatsApp ou téléphone de commande et identité de l’éditeur/hébergeur. Les mentions légales restent à compléter.
 
-Le site a été créé sans données existantes : rien n'a été inventé. `js/data.js` contient donc des **emplacements** :
+Les anciens « Burger n° 1 » et prix à 0 € ont été retirés des données affichées. Les catégories vides montrent un état d’attente discret. Il n’existe aucun bouton de commande inopérant ni aucun plat fictif commandable.
 
-- plats nommés « Burger n° 1 », « Menu n° 2 »… avec un prix à `0` (affiché « 0,00 € ») ;
-- coordonnées, horaires et réseaux vides, affichés « À compléter » sur la page ;
-- numéro de commande vide : le panneau « Ma commande » indique que l'envoi n'est pas encore activé.
+## Publier la carte
 
-À renseigner avant la mise en ligne :
+Tout le contenu de la carte et les coordonnées se trouvent dans `js/data.js`. Ajouter uniquement des plats confirmés dans `plats` :
 
-1. `site.commande.whatsapp` et/ou `site.commande.telephone` — active le bouton « Envoyer sur WhatsApp » (message pré-rempli avec la commande, que le client envoie lui-même) et/ou « Appeler ».
-2. `site.contact`, `site.reseaux`, `site.horaires`.
-3. `categories` : noms, descriptions, prix, `populaire: true` pour les plats à mettre en avant (badge + onglet « Populaires »).
-4. `mentions-legales.html`.
+```js
+{
+  id: 'identifiant-unique',
+  nom: 'Nom réel du plat',
+  description: 'Composition confirmée par le restaurant',
+  prix: 9.9, // Exemple de format, pas un prix du restaurant
+  publie: true,
+  disponible: true,
+  photo: 'assets/plats/nom-du-plat.webp'
+}
+```
 
-Les cinq catégories (Burgers, Menus, Accompagnements, Boissons, Desserts) sont des exemples : on peut en ajouter, en retirer ou les renommer, les onglets et le bandeau défilant suivent. Icônes disponibles : `burger`, `menu`, `frites`, `boisson`, `dessert`.
+Un plat n’apparaît qu’avec `publie: true`. L’ajout nécessite un prix numérique fini strictement positif et `disponible` différent de `false`. Un prix manquant n’est jamais affiché comme 0 €. Les anciens articles inconnus ou non commandables sont retirés de la sélection au chargement.
 
-## Ajouter les photos des plats
+Photos : format 4:3, 800 × 600 minimum, WebP/JPEG, environ 100–200 Ko si possible. Le texte « Photographie à venir » prend le relais si la photo manque ou échoue. Les photos ne sont ni générées ni substituées par des images qui prétendent représenter les vrais plats.
 
-1. Déposer l'image dans `assets/plats/` (format 4:3, par exemple 800 × 600 px, WebP ou JPEG, sujet centré).
-2. Dans `js/data.js`, renseigner le champ `photo` du plat :
+## Sélection et contact
 
-       { id: 'burger-1', nom: '…', prix: 9.9, populaire: true, photo: 'assets/plats/burger-1.webp' }
+La sélection est conservée dans `localStorage` (clé historique `vrff-commande`). Si le stockage est indisponible, elle fonctionne en mémoire. Quantités de 1 à 99, retrait, total calculé en centimes, vidage, focus clavier et fermeture par Échap/clic extérieur.
 
-C'est tout : la carte et la vignette du panier affichent la photo, recadrée pour remplir l'emplacement. Tant que `photo` est vide — ou si le fichier est introuvable — la carte garde le pictogramme de la catégorie et la mention « Photo à venir ». Dans le code, l'emplacement est l'élément `.card__media` (attribut `data-photo-slot`), généré par `photoSlot()` dans `js/main.js`.
+Configurer `site.commande.whatsapp` au format international et/ou `site.commande.telephone`. Sans numéro valide, un texte explique que la prise de commande est indisponible. WhatsApp **prépare** un message : le client doit l’envoyer puis attendre la confirmation du restaurant. Aucun paiement ni envoi automatique.
 
-## Burger 3D
+`site.contact` accepte `telephone`, `email`, `adresse` et `lienCarte`. Sans lien de carte, une recherche Google Maps est construite à partir de l’adresse renseignée. Les liens vides ne sont pas affichés. Les horaires sont une liste `{jour, heures}`.
 
-- Scène construite en code dans `js/burger3d.js` : pain, salade, oignons, tomates, fromage, steak, pain, plus quelques ingrédients qui flottent autour. Aucun fichier 3D, aucune photo.
-- Réglages utiles : `GAP` (écart entre les ingrédients), les couleurs passées à `std(0x…)`, la vitesse de rotation dans `update()`.
-- Un clic sur le burger le referme un instant.
-- Pour le remplacer par une vraie image ou un modèle : tout se passe dans le bloc `#burgerStage` de `index.html`. L'illustration SVG `.stage__fallback` sert d'image de secours et peut être remplacée par une `<img>`.
+## Scène 3D
 
-Adaptations automatiques :
+`js/burger3d.js` : vraie géométrie Three.js, pain irrégulier et coloré par sommet, textures procédurales de pores et de grillé, sésame instancié, steak à relief, fromage déformé et salade ondulée. Trois éclairages, matériaux distincts, ombre de contact. Aucun modèle externe ni licence de modèle à gérer.
 
-| Situation | Comportement |
-| --- | --- |
-| Petit écran ou écran tactile | Résolution plafonnée, pas d'ombres portées, moins d'objets |
-| Appareil qui peine | Résolution et ombres réduites après quelques secondes |
-| Burger hors de l'écran, onglet masqué | Rendu en pause |
-| « Réduire les animations » activé | Image 3D fixe ; plus de défilement, d'inclinaison ni d'apparitions animées |
-| Pas de WebGL, économie de données, bibliothèque injoignable | Illustration SVG du burger |
+Le burger apparaît assemblé, s’ouvre légèrement puis se referme avec une interpolation sans rebond. Le bouton permet de rejouer la séquence. Parallaxe légère à la souris ; pas de rotation permanente.
 
-## Services externes
+- Import différé de Three.js, après proximité de la scène et disponibilité du navigateur.
+- Pause hors écran et lorsque l’onglet est masqué ; arrêt aussi une fois la pose stabilisée.
+- Résolution et détails adaptés au tactile/petit écran, adaptation supplémentaire si les premières images sont lentes.
+- `prefers-reduced-motion` : pose assemblée fixe, aucune boucle, bouton de reprise masqué ; réaction aux changements du réglage.
+- Économie de données, échec WebGL/import ou perte de contexte : visuel de secours, menu immédiatement utilisable.
+- Aucun gestionnaire tactile ne bloque le défilement.
 
-- Polices *Lilita One* et *Nunito* : feuille de style Bunny Fonts (`fonts.bunny.net`), qui fait charger les fichiers de police depuis jsDelivr (`cdn.jsdelivr.net`).
-- Three.js 0.170 : jsDelivr (`cdn.jsdelivr.net`), chargé seulement quand le burger 3D peut s'afficher.
+Le burger est une **composition illustrative**, pas un plat attesté de la carte. Son rendu reste procédural ; ce n’est pas un scan photographique.
 
-Pour tout héberger soi-même : copier les polices et `three.module.min.js` dans le projet, puis modifier les deux balises `<link>` de police et la constante `THREE_URL` en haut de `js/burger3d.js`.
+## Ressources et licences
 
-## Vérifications effectuées
+Tout est servi localement : Three.js 0.170.0 (MIT, `js/vendor/THREE-LICENSE.txt`), Barlow Condensed et DM Sans (SIL OFL, licences dans `assets/fonts/`). Pas de CDN, police externe, outil d’audience ou compte client. Les liens externes ne sont sollicités que lorsqu’un utilisateur les ouvre.
 
-Dans Chromium, en 1360 × 800 et en 375 × 812 (tailles simulées, pas de téléphone physique) :
+## Vérification
 
-- burger 3D affiché, aucune erreur dans la console, pas de défilement horizontal ;
-- onglets à la souris et au clavier (flèches, Début, Fin), flèches précédent/suivant ;
-- ajout, quantités, retrait, vidage de la commande ; conservation après rechargement ;
-- panneau « Ma commande » : ouverture, fermeture par bouton, clic à l'extérieur et Échap, retour du focus ;
-- liens WhatsApp et téléphone générés quand un numéro est renseigné ;
-- photo de plat affichée, et retour au pictogramme si le fichier manque ;
-- ancres de navigation, page des mentions légales, menu mobile.
-
-Non vérifié : le réglage système « Réduire les animations » (seul le rendu fixe du burger a été testé en simulant ce réglage), Safari et Firefox, un vrai téléphone.
+Voir `VERIFICATION.md` pour les contrôles réalisés et leurs limites. Les données de test ont été servies sur un serveur local distinct ; elles ne sont pas intégrées à `js/data.js` ni à l’aperçu livré.

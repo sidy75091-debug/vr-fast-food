@@ -23,12 +23,17 @@ const types = {
   '.gif': 'image/gif',
   '.ico': 'image/x-icon',
   '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
   '.txt': 'text/plain; charset=utf-8'
 };
 
 createServer(async (req, res) => {
   try {
     let chemin = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+    if (chemin.split('/').some(segment => segment.startsWith('.'))) {
+      res.writeHead(403).end();
+      return;
+    }
     if (chemin.endsWith('/')) chemin += 'index.html';
     const fichier = resolve(racine, '.' + chemin);
     if (fichier !== racine && !fichier.startsWith(racine + sep)) {
@@ -45,6 +50,6 @@ createServer(async (req, res) => {
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end('Page introuvable');
   }
-}).listen(port, () => {
+}).listen(port, '127.0.0.1', () => {
   console.log(`VR Fast Food : http://localhost:${port}`);
 });

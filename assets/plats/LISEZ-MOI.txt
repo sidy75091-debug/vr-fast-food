@@ -1,16 +1,8 @@
 PHOTOS DES PLATS
-================
 
-Déposer ici les photos des plats, puis indiquer le chemin de chaque image
-dans js/data.js, champ « photo » du plat concerné. Exemple :
-
-    { id: 'burger-1', nom: '…', prix: 0, populaire: true, photo: 'assets/plats/burger-1.webp' }
-
-Conseils
-- Format 4:3 (par exemple 800 × 600 px) : l'image est recadrée automatiquement
-  pour remplir l'emplacement (object-fit: cover), le sujet doit donc être centré.
-- WebP ou JPEG, 150 Ko maximum par image pour garder le site rapide.
-- Nom de fichier = identifiant du plat (burger-1.webp, menu-2.webp…) pour s'y retrouver.
-
-Tant que « photo » est vide — ou si le fichier est introuvable — la carte affiche
-le pictogramme de la catégorie avec la mention « Photo à venir ».
+Aucune photographie authentique n’a été fournie.
+Déposez ici les images dont le restaurant autorise l’usage.
+Format conseillé : WebP/JPEG, 4:3, 800 x 600 pixels minimum.
+Dans js/data.js, renseignez photo: 'assets/plats/nom.webp'.
+Sans photo, ou si le fichier est introuvable, une zone neutre affiche « Photographie à venir ».
+Ne publier un plat qu’après confirmation du nom, de la composition, du prix et de la disponibilité.

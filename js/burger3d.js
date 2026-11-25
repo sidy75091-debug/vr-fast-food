@@ -363,18 +363,34 @@
       camera.updateProjectionMatrix();
     }
 
-    /* Signature: assembled first, one gentle separation, then a settled pose.
-       Time advances only on visible frames. Idle and reduced-motion have no render loop. */
-    var t=0, px=0, py=0, tx=0, ty=0, visible=false, running=false, raf=0, last=0;
+    /* Le défilement pilote le plan. Le bouton permet de le revoir à l'arrêt. */
+    var px=0, py=0, tx=0, ty=0, visible=false, running=false, raf=0, last=0;
     var contextLost=false, frames=0, slow=0, degraded=false;
     var replay=document.getElementById('replayBurger');
+    var replayTime = null;
+    var progress = 0;
+
+    function measureProgress() {
+      var rect = stage.getBoundingClientRect();
+      var stageTop = rect.top + window.scrollY;
+      var begin = Math.max(0, stageTop - window.innerHeight * 0.55);
+      var end = stageTop + rect.height * 0.42;
+      progress = Math.min(1, Math.max(0, (window.scrollY - begin) / Math.max(1, end - begin)));
+    }
     function pose(dt) {
-      if(!reduce)t+=dt;
-      var spread=reduce?0:t<1?0:t<3?smooth((t-1)/2):t<3.6?1:t<6.3?1-smooth((t-3.6)/2.7):0;
-      px+=(tx-px)*Math.min(1,dt*4);py+=(ty-py)*Math.min(1,dt*4);
-      burger.position.y=-STACK/2;
-      layers.forEach(function(l){l.g.position.y=l.y+l.off*spread;});
-      burger.rotation.set(reduce?0:py*.055,-.22+(reduce?0:px*.12),-.035);
+      var position = reduce ? 0 : progress;
+      if (replayTime !== null && !reduce) {
+        replayTime += dt;
+        var elapsed = Math.min(1, replayTime / 2.4);
+        position = (progress + elapsed) % 1;
+        if (elapsed === 1) { replayTime = null; position = progress; }
+      }
+      var spread = position < 0.52 ? smooth(position / 0.52) : smooth((1 - position) / 0.48);
+      px += (tx - px) * Math.min(1, dt * 4);
+      py += (ty - py) * Math.min(1, dt * 4);
+      burger.position.y = -(STACK + SPREAD * spread) / 2;
+      layers.forEach(function(layer) { layer.g.position.y = layer.y + layer.off * spread; });
+      burger.rotation.set(py * .055, -.22 + spread * .55 + px * .12, -.035);
     }
     function render(){renderer.render(scene,camera);stage.classList.add('is-3d');}
     function stop(){running=false;cancelAnimationFrame(raf);}
@@ -382,20 +398,26 @@
       if(!running)return;
       var raw=(now-last)/1000;last=now;pose(Math.min(raw,.045));render();
       if(!degraded && raw<.25 && ++frames<150){if(raw>.04)slow++;if(frames===149&&slow>45){degraded=true;renderer.setPixelRatio(1);renderer.shadowMap.enabled=false;frame();}}
-      if(t>=6.3&&Math.abs(tx-px)+Math.abs(ty-py)<.0005){stop();return;}
+      if(replayTime===null&&Math.abs(tx-px)+Math.abs(ty-py)<.0005){stop();return;}
       raf=requestAnimationFrame(tick);
     }
     function start(){if(running||reduce||!visible||document.hidden||contextLost)return;running=true;last=performance.now();raf=requestAnimationFrame(tick);}
-    function refresh(){if(!visible||document.hidden||contextLost)return;frame();pose(0);render();start();}
+    function refresh(){if(!visible||document.hidden||contextLost)return;measureProgress();frame();pose(0);render();start();}
     stage.append(canvas);frame();pose(0);
     var io=new IntersectionObserver(function(entries){visible=entries[0].isIntersecting;if(visible)refresh();else stop();},{threshold:.01});io.observe(stage);
-    new ResizeObserver(function(){if(visible&&!document.hidden){frame();render();}}).observe(stage);
+    new ResizeObserver(function(){if(visible&&!document.hidden){refresh();}}).observe(stage);
     document.addEventListener('visibilitychange',function(){if(document.hidden)stop();else refresh();});
+    window.addEventListener('scroll', function () {
+      if (!visible || reduce) return;
+      replayTime = null;
+      measureProgress();
+      start();
+    }, { passive: true });
     if(!small){stage.addEventListener('pointermove',function(e){if(reduce||e.pointerType==='touch')return;var r=stage.getBoundingClientRect();tx=((e.clientX-r.left)/r.width-.5)*2;ty=((e.clientY-r.top)/r.height-.5)*2;start();},{passive:true});stage.addEventListener('pointerleave',function(){tx=ty=0;start();});}
-    function motionChanged(){reduce=motion.matches;stop();tx=ty=px=py=0;t=6.3;replay.hidden=reduce||contextLost;refresh();}
+    function motionChanged(){reduce=motion.matches;stop();tx=ty=px=py=0;replayTime=null;replay.hidden=reduce||contextLost;refresh();}
     motion.addEventListener('change',motionChanged);
     replay.hidden=reduce;
-    replay.addEventListener('click',function(){if(reduce)return;t=0;start();});
+    replay.addEventListener('click',function(){if(reduce)return;replayTime=0;start();});
     canvas.addEventListener('webglcontextlost',function(e){e.preventDefault();contextLost=true;stop();stage.classList.remove('is-3d');replay.hidden=true;});
     canvas.addEventListener('webglcontextrestored',function(){contextLost=false;replay.hidden=reduce;refresh();});
   }
